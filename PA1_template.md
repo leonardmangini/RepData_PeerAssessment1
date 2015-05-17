@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 ## Introduction
 
 Created By Leonard Mangini for Coursera Reproducible Research MOOC on May 17, 2015
@@ -43,50 +38,66 @@ The data format is a "zipped" comma separated value file (csv) with 17,568 obser
 
 As noted in Prof. Peng's lecture, ensure that R code "echoes"" so that it is visible.
 
-```{r}
+
+```r
 echo =TRUE
 ```
 
 Unzip the zipfile and read the csv file into a dataframe called rawdata. While reading the data set the classes for the dataframe elements to match the data noting that the first column called "number of steps"" is an integer, the second column is a date, and the third column is a factor variable for the 5 minute time interval within that day. 
 
-```{r}
+
+```r
 unzip("activity.zip")
 rawdata<- read.csv("activity.csv", colClasses= c("integer", "Date", "factor"))
-```                                                 
+```
 
 Convert month within data to numeric within rawdata to ease later analysis and graphing.
 
-```{r}
+
+```r
 rawdata$month<- as.numeric(format(rawdata$date, "%m"))
 ```
 
 Note the number of raw observations is 17568 as was claimed by the instructor's data summary.
 
-```{r}
+
+```r
 nrow(rawdata)
+```
+
+```
+## [1] 17568
 ```
 
 Strip out the readings with NA values and store in its own dataframe for "non-NA data" analysis.
 
-```{r}
+
+```r
 data.without.na<-na.omit(rawdata)
 ```
 
 The remaining dataframe has 15264 rows, indicating that 2304 rows with NA data were removed.
 
-```{r}
+
+```r
 nrow(data.without.na)
+```
+
+```
+## [1] 15264
 ```
 
 Name the rows in the cleaned dataframe to make it easier to loop through data
 
-```{r}
+
+```r
 rownames(data.without.na)<-1:nrow(data.without.na)
 ```
 
 We are asked to make plots, so retrieve the ggplot library.
 
-```{r}
+
+```r
 library(ggplot2)
 ```
 
@@ -99,29 +110,43 @@ For this part of the assignment we are asked to ingonore missing/NA data and:
 We use rowsum to sum within each calendar day and place the data in a frame.
 We name the frame's second column TotalSteps so any graphs we make are self-documenting.
 
-```{r}
+
+```r
 stepsPerDay<-data.frame(rowsum(data.without.na$steps,format(data.without.na$date,'%Y-%m-%d')))
 names(stepsPerDay)<-("Total_Steps_per_Day")
 ```
 
 - Make a histogram of the total number of steps taken per day
 
-```{r}
+
+```r
 hist(stepsPerDay$Total_Steps_per_Day,main= "Frequency Distribution of Steps", breaks=10,xlab="Total Number of Steps Taken per Day")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
 
 - Calculate and report the mean and median total number of steps taken per day
 
 The mean number of steps per day, excluding NA data, is:
 
-```{r}
+
+```r
 mean(stepsPerDay$Total_Steps_per_Day);
+```
+
+```
+## [1] 10766.19
 ```
 
 The median number of steps per day, excluding NA data is:
 
-```{r}
+
+```r
 median(stepsPerDay$Total_Steps_per_Day);
+```
+
+```
+## [1] 10765
 ```
 
 The mean is slightly larger than the median which matches the right skew we see in the histogram.
@@ -134,24 +159,34 @@ The mean is slightly larger than the median which matches the right skew we see 
 There are 24*60= 1440 minutes in a day, so there are 288 of these 5-minute intervals. We can use a list of these 288 intervals to apply the mean function within each day across the 2-month study period. The intervals are already named to correspond to a 24-hour clock with 0 as midnight, 500 as 5 in thr morning, 2000 as 8 in the evening and so on. We need to rename our averaging variable so that it is meaningful.
 
 First we find the average number of steps:
-```{r}
+
+```r
 avgStepsinInterval <- aggregate(data.without.na$steps, list(interval = as.numeric(as.character(data.without.na$interval))), FUN = "mean")
 names(avgStepsinInterval)[2] <- "avgStepsInterval"
 ```
 
 We create the time series plot showing the average activity of the person through the day.
 
-```{r}
+
+```r
 ggplot(avgStepsinInterval, aes(interval, avgStepsInterval)) + geom_line(color = "maroon2", size = 0.5) + labs(title = "Average October and November 2012 Activity", x = "5-minute intervals during the 24 hour calendar day", y = "Average Number of Steps")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png) 
 
 We see very little activity before 500- so we assume the person probably sleeps until just after 5am. The activity increases and peaks in the morning- perhaps the person actively exercises by walking or even running given the very steep slope and overall height of the activity curve. The person's activity varies around a lower level during the day- perhaps casually walking while doing other things- until just before 2000, or 8pm.  The activity then drops off dramatically as the person seems to be coming home and then going to sleep around 2200, or 10pm.
 
 - Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
 We use the which.max function to retrieve the interval where the maximum occurs.
-```{r}
+
+```r
 avgStepsinInterval[which.max(avgStepsinInterval$avgStepsInterval),]
+```
+
+```
+##     interval avgStepsInterval
+## 104      835         206.1698
 ```
 
 We see that during this 2 month observation period, the subject is averaging more than 206 steps per 5 minutes during the interval starting at 835am. This more than 41 steps per minute which suggests that the subject of our study is walking very quickly or running- that they exercise in the morning.
@@ -165,8 +200,13 @@ There are a number of days/intervals with missing data coded as NA which might i
 
 We just count the rows in the raw data and subtract the count of rows in the stripped data.
 
-```{r}
+
+```r
 nrow(rawdata) - nrow(data.without.na)
+```
+
+```
+## [1] 2304
 ```
 
 We see that 2304 of the 17568 data points have missing data.
@@ -181,7 +221,8 @@ I have chosen to use the mean value of the available data for each5-minute inter
 
 The data frame used to make the histogram above already has the interval averages we want to use as the replacement values. So we just need to loop through the new data testing for NA values and replacing each one as we go with the corresponding averages that were already stored.
 
-```{r}
+
+```r
 imputed.data<-rawdata
 for (i in 1:nrow(imputed.data)) {
   if (is.na(imputed.data$steps[i])) {
@@ -194,27 +235,41 @@ for (i in 1:nrow(imputed.data)) {
 
 We count up by day in the new dataset just like we did before using variables with imputed in their names so we can tell them apart.
 
-```{r}
+
+```r
 imputedstepsPerDay<-data.frame(rowsum(imputed.data$steps,format(imputed.data$date,'%Y-%m-%d')))
 names(imputedstepsPerDay)<-("imputedTotal_Steps_per_Day")
 ```
 
 We then draw the histogram using the imputed data
 
-```{r}
+
+```r
 hist(imputedstepsPerDay$imputedTotal_Steps_per_Day,main= "Imputed Frequency Distribution of Steps", breaks=10,xlab="Total Number of Steps Taken per Day")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-19-1.png) 
+
 And we find the mean and median using the same R commands but on the new "imputed" data set.
 
-```{r}
+
+```r
 mean(imputedstepsPerDay$imputedTotal_Steps_per_Day);
+```
+
+```
+## [1] 10766.19
 ```
 
 The median number of steps per day, excluding NA data is:
 
-```{r}
+
+```r
 median(imputedstepsPerDay$imputedTotal_Steps_per_Day);
+```
+
+```
+## [1] 10766.19
 ```
 
 We see that the new mean is exactly the same, 10766.19 as it was before- as we would expect since we used the mean as the imputed value to replace NAs.
@@ -232,7 +287,8 @@ Using the new data set with filled in missing data, analyze the weekday versus w
 
 This new varibale can be set with an ifelse statement to pick the correct level of the new factor.
 
-```{r}
+
+```r
 imputed.data$weekendflag<-as.factor(ifelse(weekdays(imputed.data$date) %in% c("Saturday","Sunday"), "weekend","weekday"))
 ```
 
@@ -241,19 +297,23 @@ imputed.data$weekendflag<-as.factor(ifelse(weekdays(imputed.data$date) %in% c("S
 
 First we must calculate the average steps for the imputed dataset with two levels of the "weekend indicator variable". We can use the same R commands as we did above to make the first time series plot but just adding the weekend flag indicator variable as a parameter. This creates 576 averages, 24*60/5=288 for the intervals during the week and 288 for the intervals during the weekend.
 
-```{r}
+
+```r
 imputedavgStepsinInterval <- aggregate(imputed.data$steps, list(interval = as.numeric(as.character(imputed.data$interval)),weekendflag=imputed.data$weekendflag), FUN = "mean")
 names(imputedavgStepsinInterval)[3] <- "imputedavgStepsInterval"
 ```
 
 We can use the R "lattice" plotting library to create panel plots.
 
-```{r}
+
+```r
 library(lattice)
 panelplot<-xyplot(imputedavgStepsinInterval$imputedavgStepsInterval ~ imputedavgStepsinInterval$interval | imputedavgStepsinInterval$weekendflag, 
        layout = c(2, 1), type = "l", main= "Average Oct and Nov 2012 Activity Weekend vs Weekday", 
        xlab = "5-minute Interval", ylab = "Average Number of steps")
 print(panelplot)
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-24-1.png) 
 
 Looking at the 2 plots we can see that the subject wakes up from sleeping at about the same time on weekends as during the week, is less active on the weekend right after first getting up, exercises less intensely between 8am and 9am then during the week, but is then almost two times as active all day long then during the week. The subject still becomes very inactive after 2000/8pm and seems to go to sleep at about the same time on the weekend as during the week.
